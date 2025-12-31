@@ -39,3 +39,15 @@ services:
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
     depends_on:
       - kafka
+  reporting-engine:
+      build: ./reporting-engine
+      container_name: reporting-engine
+      ports:
+        - "8001:8000"
+      environment:
+        - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+        - GOOGLE_DRIVE_FOLDER_ID=1klLGJGkgWKLnK79JoSaXgqWwuPtMYSJV
+      depends_on:
+        - kafka
+      volumes:
+        - ./reporting-engine/service-account.json:/app/service-account.json:ro
