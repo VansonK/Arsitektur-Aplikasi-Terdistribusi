@@ -41,6 +41,20 @@ services:
     depends_on:
       - kafka
 
+# ------------- REPORTING SERVICE ------------- #
+  reporting-engine:
+    build: ./reporting-engine
+    container_name: reporting-engine
+    ports:
+      - "8001:8000"
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - GOOGLE_DRIVE_FOLDER_ID=1klLGJGkgWKLnK79JoSaXgqWwuPtMYSJV
+    depends_on:
+      - kafka
+    volumes:
+      - ./reporting-engine/service-account.json:/app/service-account.json:ro
+
 # ------------- NOTIFICATION SERVICE ------------- #
   notif-postgres:
       image: postgres:16
@@ -63,3 +77,5 @@ services:
 # ------------- VOLUMES ------------- #
 volumes:
   notif_data:
+  kong_data:
+  
