@@ -45,6 +45,7 @@ services:
   reporting-engine:
     build: ./reporting-engine
     container_name: reporting-engine
+    restart: always
     ports:
       - "8001:8000"
     environment:
@@ -55,7 +56,49 @@ services:
     volumes:
       - ./reporting-engine/service-account.json:/app/service-account.json:ro
 
+  report-db:
+    image: postgres:16
+    container_name: report-db
+    environment:
+      - POSTGRES_DB=report_db
+      - POSTGRES_USER=admin_report
+      - POSTGRES_PASSWORD=password_report
+    volumes:
+      - report_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "admin_report", "-d", "report_db"]
+      interval: 5s
+
+  report-service:
+    build: ./report-service
+    container_name: report-service
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql://admin_report:password_report@report-db:5432/report_db
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    depends_on:
+      report-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
 # ------------- NOTIFICATION SERVICE ------------- #
+  notification_service:
+      build: ./notification_service 
+      container_name: notification_service
+      restart: always
+      depends_on:
+        notif-postgres:
+          condition: service_healthy 
+        kafka:
+          condition: service_started
+      environment:
+        - DATABASE_URL=postgresql://notif:notif@notif-postgres:5432/notif
+        - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+        - KAFKA_TOPIC=notifications
+      ports:
+        - "8002:8000" # Port API Notif
+        
   notif-postgres:
       image: postgres:16
       container_name: notif-postgres
@@ -77,5 +120,7 @@ services:
 # ------------- VOLUMES ------------- #
 volumes:
   notif_data:
-  kong_data:
+  kafka_data:
+  zookeeper_data:
+  report_data:
   
