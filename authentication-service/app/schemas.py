@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional
 
 class UserCreate(BaseModel):
@@ -10,8 +10,8 @@ class UserRead(BaseModel):
     email: EmailStr
     is_active: bool
     
-    class Config:
-        orm_mode = True
+    # Versi Pydantic V2 yang benar:
+    model_config = ConfigDict(from_attributes=True)
 
 class Token(BaseModel):
     access_token: str

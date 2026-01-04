@@ -1,6 +1,10 @@
 fastapi
 uvicorn
-aiokafka
+python-multipart
 sqlalchemy
 psycopg2-binary
+python-jose[cryptography]
+passlib[bcrypt]
+aiokafka
+pydantic
 pydantic-settings

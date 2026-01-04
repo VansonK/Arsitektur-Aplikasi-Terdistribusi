@@ -7,6 +7,18 @@ from app.config import settings
 from app.database import init_db
 from app.kafka_consumer import consume_notifications
 from app.routers import notifications
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Untuk testing, izinkan semua. Nanti ganti dengan ["http://103.197.188.83:30"]
+    allow_credentials=True,
+    allow_methods=["*"], # Mengizinkan GET, POST, OPTIONS, dll.
+    allow_headers=["*"], # Mengizinkan semua header (Authorization, Content-Type, dll.)
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
