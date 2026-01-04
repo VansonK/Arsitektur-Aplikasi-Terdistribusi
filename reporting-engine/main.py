@@ -137,3 +137,22 @@ async def submit_report(
     except Exception as e:
         print(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.put("/report/update-progress")
+async def update_report_progress(data: dict):
+    # JANGAN di-encode manual menjadi bytes di sini
+    # Cukup kirim 'data' sebagai dictionary
+    
+    topic_update = "Update_Report_Progress" # Sesuai permintaan Anda
+    
+    try:
+        # Kirim data langsung (dict), producer akan otomatis men-serialize ke JSON bytes
+        await app.state.producer.send_and_wait(topic_update, data)
+        
+        return {
+            "status": "sent_to_kafka", 
+            "topic": topic_update,
+            "payload_sent": data
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Kafka Error: {str(e)}")

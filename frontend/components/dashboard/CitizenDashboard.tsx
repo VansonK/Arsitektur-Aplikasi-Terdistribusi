@@ -15,6 +15,21 @@ export default function CitizenDashboard({ user }: { user: any }) {
     title: '', description: '', department: 'Kebersihan', anonymous: false, is_public: true
   });
 
+  const getStatusStyles = (status: string) => {
+    const s = status?.toUpperCase() || 'PENDING';
+    switch (s) {
+      case 'PENDING':
+        return 'bg-amber-100 text-amber-700 border-amber-200';
+      case 'DIPROSES':
+      case 'PROSES':
+        return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'SELESAI':
+        return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      default:
+        return 'bg-gray-100 text-gray-700 border-gray-200';
+    }
+  };
+
   // --- 1. FUNGSI UNTUK MENAMPILKAN MULTIMEDIA ---
   // --- PERBAIKAN FUNGSI MULTIMEDIA ---
   const renderMultimedia = (mediaData: any) => {
@@ -205,6 +220,13 @@ export default function CitizenDashboard({ user }: { user: any }) {
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-[10px] font-black bg-blue-100 text-blue-700 px-2 py-0.5 rounded uppercase">{r.department}</span>
+
+                      {/* --- TAMBAHAN: BADGE STATUS PROGRES --- */}
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase border flex items-center gap-1 ${getStatusStyles(r.status)}`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span>
+                        {r.status || 'PENDING'}
+                      </span>
+
                       {/* --- 2. LOGIKA NAMA PELAPOR & ANONIM --- */}
                       <span className="text-[10px] font-bold text-gray-400 italic">
                         Oleh: {r.user_id === "ANONYMOUS" || r.anonymous ? "🤫 Warga Anonim" : `👤 User #${r.user_id}`}

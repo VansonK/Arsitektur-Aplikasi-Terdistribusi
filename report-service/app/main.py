@@ -6,6 +6,7 @@ from typing import List
 from . import models, schemas, auth # Pastikan auth.py tersedia di report-service juga
 from .database import engine, Base, get_db
 from .kafka_consumer import consume_reports
+from .consumer import consume_progress_updates
 from fastapi.middleware.cors import CORSMiddleware
 
 Base.metadata.create_all(bind=engine)
@@ -24,6 +25,7 @@ app.add_middleware(
 async def startup_event():
     # Menjalankan consumer sebagai background task
     asyncio.create_task(consume_reports())
+    asyncio.create_task(consume_progress_updates())
     
 # Endpoint Statistik
 @app.get("/reports/stats")
