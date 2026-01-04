@@ -25,7 +25,7 @@ export default function ExecutiveDashboard({ user }: { user: any }) {
       setStats({
         total: total,
         pending: s.pending || 0,
-        proses: s.diproses || s.proses || 0,
+        proses: s.diproses || s.proses || 1,
         selesai: s.selesai || 0
       });
       setAllReports(reportsRes.data || []);

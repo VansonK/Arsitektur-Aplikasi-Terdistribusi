@@ -187,25 +187,6 @@ services:
         retries: 5
       networks:
         - lapor-network
-# ------------- SUPERSET ------------- #
-  redis:
-    image: redis:7
-    container_name: superset_cache
-
-  superset:
-  # Jangan Lupa run `pip install psycopg2-binary`
-    image: apache/superset:latest
-    build: ./superset
-    container_name: superset
-    ports:
-      - "8088:8088"
-    environment:
-      SUPERSET_SECRET_KEY: 'mahasiswa_capstone_project_secret_key'
-      # Matikan HTTPS karena kita jalan di localhost
-      TALISMAN_ENABLED: "False"
-    depends_on:
-      - postgres
-      - redis
 
 # ------------- VOLUMES ------------- #
 volumes:

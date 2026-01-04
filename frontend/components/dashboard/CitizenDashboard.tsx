@@ -95,7 +95,7 @@ export default function CitizenDashboard({ user }: { user: any }) {
       const dummyNotif: Notification = {
         id: 9999,
         report_id: 0,
-        message: "📢 Selamat datang! Gunakan dashboard ini untuk memantau status laporan Anda secara real-time.",
+        message: "📢 Progres Laporan 'Sampah' telah diperbaharui",
         is_read: false,
         created_at: new Date().toISOString()
       };
