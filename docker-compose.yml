@@ -163,7 +163,7 @@ services:
       environment:
         - DATABASE_URL=postgresql://notif:notif@notif-postgres:5432/notif
         - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-        - KAFKA_TOPIC=notifications
+        - KAFKA_TOPIC=Update_Report_Progress
       ports:
         - "8002:8000" # Port API Notif
       networks:

@@ -15,5 +15,5 @@ def get_db():
         db.close()
 
 def init_db():
-    from app.models import NotificationEvent
+    from app.models import Notification
     Base.metadata.create_all(bind=engine)

@@ -9,13 +9,11 @@ export default function AdminDashboard({ user }: { user: any }) {
   const [isLoading, setIsLoading] = useState(false);
   const [filterStatus, setFilterStatus] = useState<ReportStatus | 'ALL'>('ALL');
   
-  // State untuk proses editing status/note
   const [editingId, setEditingId] = useState<number | null>(null);
   const [tempStatus, setTempStatus] = useState<ReportStatus>('PENDING');
   const [tempNote, setTempNote] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // 1. Fetch Data
   const fetchAllReports = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -30,21 +28,18 @@ export default function AdminDashboard({ user }: { user: any }) {
 
   useEffect(() => { fetchAllReports(); }, [fetchAllReports]);
 
-  // 2. Handler Update Status & Note
   const handleUpdateReport = async (reportId: number) => {
     setIsUpdating(true);
     try {
-      // Menembak ke reporting-engine (Producer)
       await reportApi.put(`/report/update-progress`, {
         report_id: reportId,
+        user_id: user.id,
         status: tempStatus,
         admin_note: tempNote
       });
       
       alert("Perubahan sedang diproses via Kafka...");
       setEditingId(null);
-      
-      // Beri sedikit delay sebelum refresh agar Consumer punya waktu update DB
       setTimeout(() => fetchAllReports(), 1000); 
     } catch (err) {
       alert("Gagal mengirim update ke engine.");
@@ -53,7 +48,6 @@ export default function AdminDashboard({ user }: { user: any }) {
     }
   };
 
-  // 3. Render Multimedia (Sama seperti Citizen, dengan Direct Link Drive)
   const renderMultimedia = (mediaData: any) => {
     try {
       if (!mediaData) return null;
@@ -63,7 +57,7 @@ export default function AdminDashboard({ user }: { user: any }) {
       const getDirectLink = (url: string) => {
         if (url.includes('drive.google.com')) {
           const fileId = url.split('/d/')[1]?.split('/')[0] || url.split('id=')[1]?.split('&')[0];
-          return fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : url;
+          return fileId ? `https://lh3.googleusercontent.com/u/0/d/${fileId}` : url;
         }
         return url;
       };
@@ -80,26 +74,25 @@ export default function AdminDashboard({ user }: { user: any }) {
     } catch (e) { return null; }
   };
 
-  // 4. Statistik Ringkas
+  // --- STATISTIK (DIPERBARUI) ---
   const stats = {
     total: reports.length,
-    pending: reports.filter((r: any) => r.status === 'pending').length,
-    proses: reports.filter((r: any) => r.status === 'proses').length,
-    selesai: reports.filter((r: any) => r.status === 'selesai').length,
+    pending: reports.filter((r: any) => r.status?.toLowerCase() === 'pending').length,
+    proses: reports.filter((r: any) => r.status?.toLowerCase() === 'proses').length, // Ditambahkan
+    selesai: reports.filter((r: any) => r.status?.toLowerCase() === 'selesai').length,
   };
 
   const filteredReports = filterStatus === 'ALL' 
     ? reports 
     : reports.filter((r: any) => {
-        // Pastikan status ada dan bandingkan dengan huruf besar
         const reportStatus = r.status ? r.status.toUpperCase() : 'PENDING';
         return reportStatus === filterStatus;
       });
-      
+
   return (
     <div className="p-6 space-y-8 max-w-7xl mx-auto font-sans bg-gray-50 min-h-screen">
-      {/* Header & Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Header & Stats - Grid diubah ke md:grid-cols-5 */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-blue-100 col-span-1">
           <h1 className="text-xl font-black text-blue-900">Admin Control</h1>
           <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Panel Verifikasi Laporan</p>
@@ -107,6 +100,7 @@ export default function AdminDashboard({ user }: { user: any }) {
         {[
           { label: 'Total Laporan', val: stats.total, color: 'text-gray-600', bg: 'bg-gray-100' },
           { label: 'Menunggu', val: stats.pending, color: 'text-yellow-600', bg: 'bg-yellow-100' },
+          { label: 'Diproses', val: stats.proses, color: 'text-blue-600', bg: 'bg-blue-100' }, // Ditambahkan
           { label: 'Selesai', val: stats.selesai, color: 'text-green-600', bg: 'bg-green-100' },
         ].map((s, i) => (
           <div key={i} className={`${s.bg} p-6 rounded-3xl flex flex-col justify-center`}>
@@ -161,7 +155,6 @@ export default function AdminDashboard({ user }: { user: any }) {
                 </td>
                 <td className="p-6 align-top">
                   {editingId === r.id ? (
-                    /* --- UI EDITING --- */
                     <div className="space-y-3 bg-blue-50 p-4 rounded-2xl border border-blue-100">
                       <select 
                         value={tempStatus} 
@@ -196,14 +189,13 @@ export default function AdminDashboard({ user }: { user: any }) {
                       </div>
                     </div>
                   ) : (
-                    /* --- UI DISPLAY --- */
                     <div className="flex flex-col items-center gap-3">
                       <span className={`px-4 py-1.5 rounded-full text-[10px] font-black shadow-sm border ${
-                        r.status === 'PENDING' ? 'bg-yellow-50 text-yellow-600 border-yellow-200' :
-                        r.status === 'PROSES' ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                        r.status?.toUpperCase() === 'PENDING' ? 'bg-yellow-50 text-yellow-600 border-yellow-200' :
+                        r.status?.toUpperCase() === 'PROSES' ? 'bg-blue-50 text-blue-600 border-blue-200' :
                         'bg-green-50 text-green-600 border-green-200'
                       }`}>
-                        {r.status}
+                        {r.status || 'PENDING'}
                       </span>
                       
                       <div className="text-center">
@@ -216,7 +208,7 @@ export default function AdminDashboard({ user }: { user: any }) {
                       <button 
                         onClick={() => {
                           setEditingId(r.id);
-                          setTempStatus(r.status);
+                          setTempStatus(r.status || 'PENDING');
                           setTempNote(r.admin_note || '');
                         }}
                         className="mt-2 text-blue-600 text-[10px] font-black uppercase hover:underline"

@@ -1,73 +1,65 @@
 import json
+import asyncio
 import logging
-
+from .database import SessionLocal
+from .models import Notification
+from .config import settings
 from aiokafka import AIOKafkaConsumer
-from app.config import settings
-from app.database import SessionLocal
-from app.models import NotificationEvent
-from app.websocket_manager import manager
 
+# Setup logging sederhana untuk memantau trafik Kafka
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 async def consume_notifications():
+    # Memberi waktu bagi Kafka Broker untuk siap (cold start)
+    await asyncio.sleep(10)
+    
     consumer = AIOKafkaConsumer(
         settings.kafka_topic,
         bootstrap_servers=settings.kafka_bootstrap_servers,
-        value_deserializer=lambda m: json.loads(m.decode("utf-8")),
         group_id=settings.kafka_group_id,
-        auto_offset_reset="earliest",
-        enable_auto_commit=True,
+        value_deserializer=lambda v: json.loads(v.decode("utf-8"))
     )
-
+    
     await consumer.start()
-    logger.info("Kafka consumer started")
+    logger.info(f"🚀 Kafka Consumer dimulai pada topik: {settings.kafka_topic}")
 
     try:
         async for msg in consumer:
-            notification_data = msg.value
-            logger.info("Received notification: %s", notification_data)
+            data = msg.value
+            user_id = data.get("user_id")
+            
+            if not user_id:
+                logger.warning("⚠️ Pesan diterima tanpa user_id, dilewati.")
+                continue
 
+            # Buat sesi database baru untuk setiap pesan
             db = SessionLocal()
             try:
-                db_notification = NotificationEvent(
-                    user_id=notification_data["user_id"],
-                    notification_type=notification_data["notification_type"],
-                    title=notification_data["title"],
-                    message=notification_data["message"],
-                    data=json.dumps(notification_data.get("data", {})),
+                # 1. Buat object Notifikasi baru berdasarkan data Kafka
+                new_notif = Notification(
+                    user_id=str(data.get("user_id")),
+                    report_id=data.get("report_id"),
+                    title="Update Status Laporan", # Memberi judul default
+                    status=data.get("status"),     # Mengisi kolom status dari Kafka
+                    message=f"Laporan #{data.get('report_id')} Anda kini berstatus {data.get('status')}."
                 )
-
-                db.add(db_notification)
+                
+                # 2. Simpan ke Database
+                db.add(new_notif)
                 db.commit()
-                db.refresh(db_notification)
+                db.refresh(new_notif)
+                
+                logger.info(f"✅ Notifikasi disimpan untuk User {user_id} - Report #{data.get('report_id')}")
 
-                await manager.send_personal_message(
-                    {
-                        "id": db_notification.id,
-                        "user_id": db_notification.user_id,
-                        "notification_type": db_notification.notification_type,
-                        "title": db_notification.title,
-                        "message": db_notification.message,
-                        "data": json.loads(db_notification.data),
-                        "created_at": db_notification.created_at.isoformat(),
-                        "read": db_notification.read,
-                    },
-                    db_notification.user_id,
-                )
-
-                logger.info(
-                    "Notification %s saved and sent to user %s",
-                    db_notification.id,
-                    db_notification.user_id,
-                )
-
-            except Exception:
+            except Exception as e:
                 db.rollback()
-                logger.exception("Error processing notification")
+                logger.error(f"❌ Gagal menyimpan notifikasi ke DB: {e}")
             finally:
                 db.close()
-
+                
+    except Exception as e:
+        logger.error(f"❌ Error pada Kafka Consumer loop: {e}")
     finally:
         await consumer.stop()
-        logger.info("Kafka consumer stopped")
+        logger.info("🔌 Kafka Consumer dimatikan.")

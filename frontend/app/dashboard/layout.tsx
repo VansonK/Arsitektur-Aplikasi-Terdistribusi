@@ -5,14 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import Link from 'next/link';
 import { LayoutDashboard, FileText, Bell, LogOut, User, Loader2 } from 'lucide-react';
-import { useSocket } from '@/hooks/useSocket';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { token, user, logout } = useAuthStore();
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false); // State untuk handle hydration
-
-  useSocket();
 
   // Memastikan komponen sudah termuat di browser
   useEffect(() => {

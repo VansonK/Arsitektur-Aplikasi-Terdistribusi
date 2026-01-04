@@ -1,25 +1,21 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional, Any
 
 class NotificationBase(BaseModel):
     user_id: str
-    notification_type: str
     title: str
     message: str
-    data: dict = {}
+    report_id: Optional[int] = None
+    status: Optional[str] = None
 
 class NotificationCreate(NotificationBase):
-    pass
+    data: Optional[dict] = {}
 
-class NotificationResponse(BaseModel):
+class NotificationResponse(NotificationBase):
     id: int
-    user_id: str
-    notification_type: str
-    title: str
-    message: str
-    data: str
+    is_read: bool # Ubah dari read (int) menjadi is_read (bool)
     created_at: datetime
-    read: int
     
     class Config:
         from_attributes = True

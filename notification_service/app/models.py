@@ -1,19 +1,15 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, Index
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
 from datetime import datetime
-from app.database import Base
+from .database import Base
 
-class NotificationEvent(Base):
-    __tablename__ = "notification_events"
-    
+class Notification(Base):
+    __tablename__ = "notifications"
+
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String, nullable=False, index=True)
-    notification_type = Column(String, nullable=False)
-    title = Column(String, nullable=False)
-    message = Column(Text, nullable=False)
-    data = Column(Text)  # JSON string for additional data
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    read = Column(Integer, default=0)
-    
-    __table_args__ = (
-        Index('idx_user_created', 'user_id', 'created_at'),
-    )
+    user_id = Column(String, index=True)
+    report_id = Column(Integer, nullable=True) # Tambahkan nullable=True
+    title = Column(String)
+    status = Column(String, nullable=True)
+    message = Column(Text)
+    is_read = Column(Boolean, default=False) # Gunakan Boolean (is_read) secara konsisten
+    created_at = Column(DateTime, default=datetime.utcnow)
